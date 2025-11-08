@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from . import ModuleResult, ReconContext, ReconModule
+from ..core import ModuleResult, ReconContext, ReconModule
 
 CRT_ENDPOINT = "https://crt.sh/?q={query}&output=json"
 

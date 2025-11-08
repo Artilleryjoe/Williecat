@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from . import ModuleResult, ReconContext, ReconModule
+from ..core import ModuleResult, ReconContext, ReconModule
 
 HN_SEARCH = "https://hn.algolia.com/api/v1/search"
 REDDIT_SEARCH = "https://www.reddit.com/search.json"

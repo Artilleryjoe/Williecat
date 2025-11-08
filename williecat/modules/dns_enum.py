@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from . import ModuleResult, ReconContext, ReconModule
+from ..core import ModuleResult, ReconContext, ReconModule
 
 DNS_TYPES = {
     "A": 1,
