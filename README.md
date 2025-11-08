@@ -52,3 +52,12 @@ returns a `ModuleResult`. Register new modules by adding them to
 
 Williecat is released under the MIT license. Use responsibly and honor the
 stealthy spirit of Willie—gather quietly, act with precision.
+
+## Tribute to Willie
+
+Willie was the office sentry who inspired this project—an endlessly curious
+tabby who could map every corner of a room with a single sweep of his tail.
+When he wasn't overseeing reconnaissance runs from the top of a dresser, he was
+curled up beside a stack of language books, reminding us that observation and
+patience are the heart of good intelligence work. May every quiet scan and
+carefully documented lead carry forward his calm focus and gentle paws.
