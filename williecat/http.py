@@ -77,7 +77,7 @@ class HttpResponse:
 
 
 class HttpSession:
-    """Lightweight session supporting GET requests."""
+    """Lightweight session supporting HTTP requests via ``urllib``."""
 
     def __init__(self):
         self.cookie_jar = CookieJar()
@@ -91,8 +91,9 @@ class HttpSession:
         for key, value in headers.items():
             self._headers[key] = value
 
-    def get(
+    def request(
         self,
+        method: str,
         url: str,
         params: Optional[Mapping[str, str | int | float]] = None,
         headers: Optional[Mapping[str, str]] = None,
@@ -102,7 +103,7 @@ class HttpSession:
         if params:
             query = urllib.parse.urlencode(params)
             url = _merge_url_params(url, query)
-        request = urllib.request.Request(url)
+        request = urllib.request.Request(url, method=method.upper())
         for key, value in self._headers.items():
             request.add_header(key, value)
         if headers:
@@ -114,6 +115,40 @@ class HttpSession:
             data = response.read()
             cookies = [Cookie(cookie.name, cookie.value) for cookie in self.cookie_jar]
             return HttpResponse(data, response.geturl(), response.getcode(), response.headers.items(), cookies)
+
+    def get(
+        self,
+        url: str,
+        params: Optional[Mapping[str, str | int | float]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+        timeout: Optional[float] = None,
+        allow_redirects: bool = True,
+    ) -> HttpResponse:
+        return self.request(
+            "GET",
+            url,
+            params=params,
+            headers=headers,
+            timeout=timeout,
+            allow_redirects=allow_redirects,
+        )
+
+    def head(
+        self,
+        url: str,
+        params: Optional[Mapping[str, str | int | float]] = None,
+        headers: Optional[Mapping[str, str]] = None,
+        timeout: Optional[float] = None,
+        allow_redirects: bool = True,
+    ) -> HttpResponse:
+        return self.request(
+            "HEAD",
+            url,
+            params=params,
+            headers=headers,
+            timeout=timeout,
+            allow_redirects=allow_redirects,
+        )
 
 
 def _merge_url_params(url: str, query: str) -> str:

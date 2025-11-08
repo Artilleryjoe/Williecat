@@ -4,7 +4,7 @@ from __future__ import annotations
 import socket
 from typing import Any, Dict, Optional
 
-from . import ModuleResult, ReconContext, ReconModule
+from ..core import ModuleResult, ReconContext, ReconModule
 
 IPINFO_ENDPOINT = "https://ipinfo.io/{ip}/json"
 

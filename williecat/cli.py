@@ -2,15 +2,23 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, List
 
+from .core import ModuleResult, ReconContext, ReconModule
 from .http import HttpSession
-from .modules import ModuleResult, ReconContext, ReconModule, get_module_registry, iter_modules
+from .modules import get_module_registry, iter_modules
 from .modules import reporter as reporter_utils
 
-DEFAULT_MODULES = ["whois", "dns", "certs", "headers", "ip", "social"]
+BANNER = r"""/\_/\  Williecat v0.1
+( o.o ) Reconnaissance with Instinct
+^ <"""
+
+DEFAULT_MODULES = ["whois", "headers", "dns", "certs", "ip"]
+PAWPRINTS_PATH = Path("pawprints.log")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -46,6 +54,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="List available modules and exit.",
     )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress banner and inline module output.",
+    )
     return parser
 
 
@@ -58,9 +71,14 @@ def main(argv: Iterable[str] | None = None) -> int:
             print(f"{name}: {module.description}")
         return 0
 
-    modules = DEFAULT_MODULES
+    modules: List[str]
     if args.modules:
-        modules = iter_modules(args.modules.split(","))
+        try:
+            modules = iter_modules(args.modules.split(","))
+        except KeyError as exc:
+            parser.error(str(exc))
+    else:
+        modules = list(DEFAULT_MODULES)
 
     if not args.domain and not args.ip and not args.url:
         parser.error("At least one of --domain, --ip, or --url must be provided.")
@@ -79,21 +97,30 @@ def main(argv: Iterable[str] | None = None) -> int:
     results: List[ModuleResult] = []
     registry = get_module_registry()
 
+    if not args.quiet:
+        print(BANNER)
+
     for name in modules:
         module_cls = registry[name]
         module: ReconModule = module_cls()
         result = module.run(context)
         results.append(result)
-        _print_inline(result)
+        if not args.quiet:
+            _print_inline(result)
+            print("soft paws only.")
 
     if args.output:
         markdown = reporter_utils.render_markdown(context, results)
         reporter_utils.write_markdown(args.output, markdown)
-        print(f"[+] Markdown report written to {args.output}")
+        if not args.quiet:
+            print(f"[+] Markdown report written to {args.output}")
 
     if args.json_output:
         reporter_utils.write_json(args.json_output, results)
-        print(f"[+] JSON report written to {args.json_output}")
+        if not args.quiet:
+            print(f"[+] JSON report written to {args.json_output}")
+
+    _log_run(context, modules, results, args.output, args.json_output, quiet=args.quiet)
 
     return 0
 
@@ -115,6 +142,34 @@ def _print_inline(result: ModuleResult) -> None:
     if result.warnings:
         for warning in result.warnings:
             print(f"  ! {warning}")
+
+
+def _log_run(
+    context: ReconContext,
+    modules: Iterable[str],
+    results: Iterable[ModuleResult],
+    output_path: Path | None,
+    json_path: Path | None,
+    *,
+    quiet: bool,
+) -> None:
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "domain": context.domain,
+        "ip_address": context.ip_address,
+        "base_url": context.base_url,
+        "modules": list(modules),
+        "output": str(output_path) if output_path else None,
+        "json_output": str(json_path) if json_path else None,
+        "results": [result.as_dict() for result in results],
+    }
+
+    try:
+        with PAWPRINTS_PATH.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+    except OSError as exc:  # pragma: no cover - best effort logging
+        if not quiet:
+            print(f"[!] Failed to write pawprints log: {exc}", file=sys.stderr)
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -1,47 +1,9 @@
 """Module registry for Williecat."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Dict, Iterable, List
 
-
-@dataclass
-class ReconContext:
-    """Shared context for modules to access target metadata."""
-
-    domain: Optional[str] = None
-    ip_address: Optional[str] = None
-    base_url: Optional[str] = None
-    timeout: float = 10.0
-    session: Any = None
-
-
-@dataclass
-class ModuleResult:
-    """Structured result from a module run."""
-
-    module: str
-    data: Mapping[str, Any] | List[Any] | None
-    warnings: List[str] = field(default_factory=list)
-    error: Optional[str] = None
-
-    def as_dict(self) -> Dict[str, Any]:
-        return {
-            "module": self.module,
-            "data": self.data,
-            "warnings": self.warnings,
-            "error": self.error,
-        }
-
-
-class ReconModule:
-    """Base class for reconnaissance modules."""
-
-    name: str = "module"
-    description: str = ""
-
-    def run(self, context: ReconContext) -> ModuleResult:  # pragma: no cover - interface
-        raise NotImplementedError
+from ..core import ModuleResult, ReconContext, ReconModule
 
 
 def get_module_registry() -> Dict[str, type[ReconModule]]:
@@ -52,15 +14,12 @@ def get_module_registry() -> Dict[str, type[ReconModule]]:
     from .cert_scraper import CertificateScraperModule
     from .header_sniffer import HeaderSnifferModule
     from .ip_intel import IpIntelModule
-    from .social_trace import SocialTraceModule
-
     return {
         WhoisLookupModule.name: WhoisLookupModule,
         DnsEnumModule.name: DnsEnumModule,
         CertificateScraperModule.name: CertificateScraperModule,
         HeaderSnifferModule.name: HeaderSnifferModule,
         IpIntelModule.name: IpIntelModule,
-        SocialTraceModule.name: SocialTraceModule,
     }
 
 

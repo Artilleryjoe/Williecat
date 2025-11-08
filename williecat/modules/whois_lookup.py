@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from . import ModuleResult, ReconContext, ReconModule
+from ..core import ModuleResult, ReconContext, ReconModule
 
 RDAP_ENDPOINT = "https://rdap.org/domain/{domain}"  # passive RDAP API
 
