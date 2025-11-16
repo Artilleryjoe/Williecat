@@ -17,12 +17,16 @@ reporting, and extensibility.
   additional domains and hostnames that may reference the target.
 - **IP Intelligence:** Pull ASN and geolocation data from ipinfo.io, optionally
   resolving hostnames to addresses first.
+- **Social Trace:** Sweep Hacker News and Reddit mentions to capture emerging
+  chatter about the target without logging in anywhere.
 - **Report Exporter:** Emit Markdown and JSON outputs so every recon run keeps
   the same Williecat voice.
 - **Pawprints Log:** Each execution appends JSONL metadata to `pawprints.log`
   for audit trails.
 - **Quiet Mode:** Use `--quiet` to silence console chatter and keep the claws
   sheathed.
+- **Demo Mode:** Run `--demo` to generate canned results for demos and tests
+  without touching the network.
 
 ## Installation
 
@@ -42,7 +46,7 @@ The banner appears on launch unless `--quiet` is supplied:
 Run a focused recon sweep:
 
 ```bash
-python -m williecat --domain example.com --modules whois,headers,dns,certs,ip --output recon_report.md
+python -m williecat --domain example.com --modules whois,headers,dns,certs,ip,social --output recon_report.md
 ```
 
 ### Command-line options
@@ -59,6 +63,13 @@ Run `python -m williecat --help` to view all arguments. Key flags include:
 - `--timeout` – Network timeout (seconds).
 - `--list-modules` – List available modules and exit.
 - `--quiet` – Suppress the ASCII banner and inline module summaries.
+- `--demo` – Emit a fully-populated, canned report for demos or offline tests.
+
+Want to trial the reporting flow without network access? Launch demo mode:
+
+```
+python -m williecat --demo --output recon_report.md --json-output recon_report.json
+```
 
 Each run is also recorded to `pawprints.log` as newline-delimited JSON for
 simple ingestion or replay.
