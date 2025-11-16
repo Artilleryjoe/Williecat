@@ -14,12 +14,14 @@ def get_module_registry() -> Dict[str, type[ReconModule]]:
     from .cert_scraper import CertificateScraperModule
     from .header_sniffer import HeaderSnifferModule
     from .ip_intel import IpIntelModule
+    from .social_trace import SocialTraceModule
     return {
         WhoisLookupModule.name: WhoisLookupModule,
         DnsEnumModule.name: DnsEnumModule,
         CertificateScraperModule.name: CertificateScraperModule,
         HeaderSnifferModule.name: HeaderSnifferModule,
         IpIntelModule.name: IpIntelModule,
+        SocialTraceModule.name: SocialTraceModule,
     }
 
 
