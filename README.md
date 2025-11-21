@@ -117,6 +117,11 @@ returns a `ModuleResult`. Register new modules by adding them to
 Williecat is released under the MIT license. Use responsibly and honor the
 stealthy spirit of Willie—gather quietly, act with precision.
 
+## Release notes
+
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for a summary of public Williecat
+builds, starting with v0.1.
+
 ## Tribute to Willie
 
 Willie was the office sentry who inspired this project...an endlessly curious
@@ -125,3 +130,5 @@ When he wasn't overseeing reconnaissance runs from the top of a dresser, he was
 curled up beside a stack of German dictionaries, reminding us that observation and
 patience are the heart of good intelligence work. May every quiet scan and
 carefully documented lead carry forward his curious spirit and gentle paws.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
