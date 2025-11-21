@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,7 +20,7 @@ BANNER = r"""/\_/\  Williecat v0.1
 ^ <"""
 
 DEFAULT_MODULES = ["whois", "headers", "dns", "certs", "ip", "social"]
-PAWPRINTS_PATH = Path("pawprints.log")
+PAWPRINTS_ENV_VAR = "WILLIECAT_PAWPRINTS"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -195,6 +196,7 @@ def _log_run(
     *,
     quiet: bool,
 ) -> None:
+    pawprints_path = _resolve_pawprints_path()
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "domain": context.domain,
@@ -207,11 +209,18 @@ def _log_run(
     }
 
     try:
-        with PAWPRINTS_PATH.open("a", encoding="utf-8") as handle:
+        with pawprints_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=True) + "\n")
     except OSError as exc:  # pragma: no cover - best effort logging
         if not quiet:
             print(f"[!] Failed to write pawprints log: {exc}", file=sys.stderr)
+
+
+def _resolve_pawprints_path() -> Path:
+    """Return the path where pawprints logs should be written."""
+
+    override = os.environ.get(PAWPRINTS_ENV_VAR)
+    return Path(override) if override else Path("pawprints.log")
 
 
 if __name__ == "__main__":  # pragma: no cover
