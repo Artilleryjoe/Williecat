@@ -115,7 +115,7 @@ returns a `ModuleResult`. Register new modules by adding them to
 ## License
 
 Williecat is released under the MIT license. Use responsibly and honor the
-stealthy spirit of Willie—gather quietly, act with precision.
+stealthy spirit of Willie...gather quietly, act with precision.
 
 ## Release notes
 
