@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+*.log
+.recon_report*
+recon_report.*
+.recon_cache/
+.pytest_cache/
+.DS_Store

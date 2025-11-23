@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List
 
-from ..core import ModuleResult, ReconContext, ReconModule
+from ..core import ReconModule
 
 
 def get_module_registry() -> Dict[str, type[ReconModule]]:
