@@ -100,7 +100,6 @@ def main(argv: Iterable[str] | None = None) -> int:
             parser.error("At least one of --domain, --ip, or --url must be provided.")
 
         session = HttpSession()
-        session.update_headers({"User-Agent": "Williecat/1.0"})
 
         context = ReconContext(
             domain=args.domain,
@@ -122,6 +121,8 @@ def main(argv: Iterable[str] | None = None) -> int:
         json_path=args.json_output,
         quiet=args.quiet,
     )
+    if not args.quiet:
+        _print_summary(results)
 
     return 0
 
@@ -140,18 +141,17 @@ def _execute_modules(context: ReconContext, modules: Iterable[str], *, quiet: bo
 
 def _print_inline(result: ModuleResult) -> None:
     header = f"[{result.module.upper()}]"
-    if result.error:
-        print(f"{header} Error: {result.error}")
-        return
     print(header)
-    if result.data is None:
+    print(f"  Outcome: {result.outcome}")
+    if result.outcome == "success":
+        if isinstance(result.data, dict):
+            for key, value in result.data.items():
+                print(f"  {key}: {value}")
+        elif isinstance(result.data, list):
+            for item in result.data:
+                print(f"  - {item}")
+    elif result.outcome == "no_data":
         print("  No data collected.")
-    elif isinstance(result.data, dict):
-        for key, value in result.data.items():
-            print(f"  {key}: {value}")
-    else:
-        for item in result.data:
-            print(f"  - {item}")
     if result.warnings:
         for warning in result.warnings:
             print(f"  ! {warning}")
@@ -185,6 +185,22 @@ def _emit_reports(
             print(f"[+] JSON report written to {json_path}")
 
     _log_run(context, modules, results, output_path, json_path, quiet=quiet)
+
+
+def _print_summary(results: Iterable[ModuleResult]) -> None:
+    outcomes = {"success": 0, "blocked": 0, "no_data": 0, "timeout": 0}
+    total = 0
+    for result in results:
+        total += 1
+        if result.outcome in outcomes:
+            outcomes[result.outcome] += 1
+
+    print("Modules run:", total)
+    print("Success:", outcomes["success"])
+    print("Blocked:", outcomes["blocked"])
+    print("No data:", outcomes["no_data"])
+    if outcomes["timeout"]:
+        print("Timeout:", outcomes["timeout"])
 
 
 def _log_run(

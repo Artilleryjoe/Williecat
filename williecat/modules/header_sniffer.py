@@ -1,10 +1,10 @@
 """HTTP header collection module."""
 from __future__ import annotations
 
-from itertools import cycle
-from typing import ClassVar, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from ..core import ModuleResult, ReconContext, ReconModule
+from ..user_agents import random_user_agent
 
 SECURITY_HEADERS = [
     "strict-transport-security",
@@ -17,20 +17,11 @@ SECURITY_HEADERS = [
 ]
 
 
-USER_AGENTS = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15",
-    "Mozilla/5.0 (X11; Linux x86_64) Gecko/20100101 Firefox/121.0",
-    "curl/8.5.0",
-)
-
-
 class HeaderSnifferModule(ReconModule):
     """Fetch HTTP headers and security-relevant metadata."""
 
     name = "headers"
     description = "Collect HTTP response headers from the target application."
-    _ua_cycle: ClassVar[cycle[str]] = cycle(USER_AGENTS)
 
     def run(self, context: ReconContext) -> ModuleResult:
         url = context.base_url
@@ -40,13 +31,13 @@ class HeaderSnifferModule(ReconModule):
             url = f"https://{context.domain}"
 
         session = context.session
-        user_agent = next(self._ua_cycle)
+        user_agent = random_user_agent()
         request_headers = {"User-Agent": user_agent}
 
         try:
             response = session.head(url, headers=request_headers, timeout=context.timeout, allow_redirects=True)
         except Exception as exc:  # pragma: no cover - defensive
-            return ModuleResult(self.name, None, error=f"HEAD request failed: {exc}")
+            return ModuleResult.from_exception(self.name, exc)
 
         method_used = "HEAD"
         warnings: List[str] = []
@@ -56,7 +47,7 @@ class HeaderSnifferModule(ReconModule):
                 method_used = "GET (fallback)"
                 warnings.append("HEAD not supported – performed safe GET fallback.")
             except Exception as exc:  # pragma: no cover - defensive
-                return ModuleResult(self.name, None, error=f"HTTP request failed: {exc}")
+                return ModuleResult.from_exception(self.name, exc)
 
         result: Dict[str, Optional[str]] = {}
         for header in SECURITY_HEADERS:

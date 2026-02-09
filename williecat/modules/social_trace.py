@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 from ..core import ModuleResult, ReconContext, ReconModule
+from ..user_agents import random_user_agent
 
 HN_SEARCH = "https://hn.algolia.com/api/v1/search"
 REDDIT_SEARCH = "https://www.reddit.com/search.json"
@@ -17,24 +18,26 @@ class SocialTraceModule(ReconModule):
 
     def run(self, context: ReconContext) -> ModuleResult:
         if not context.domain:
-            return ModuleResult(self.name, None, error="Domain is required for social tracing.")
+            return ModuleResult.failure(self.name, "Domain is required for social tracing.")
 
         session = context.session
         hits: List[Dict[str, Any]] = []
+        user_agent = random_user_agent()
 
-        hits.extend(_search_hacker_news(session, context))
-        hits.extend(_search_reddit(session, context))
+        hits.extend(_search_hacker_news(session, context, user_agent))
+        hits.extend(_search_reddit(session, context, user_agent))
 
         if not hits:
             return ModuleResult(self.name, None, warnings=["No social mentions discovered."])
         return ModuleResult(self.name, hits)
 
 
-def _search_hacker_news(session, context: ReconContext) -> List[Dict[str, Any]]:
+def _search_hacker_news(session, context: ReconContext, user_agent: str) -> List[Dict[str, Any]]:
     try:
         response = session.get(
             HN_SEARCH,
             params={"query": context.domain, "tags": "story"},
+            headers={"User-Agent": user_agent},
             timeout=context.timeout,
         )
         response.raise_for_status()
@@ -51,8 +54,8 @@ def _search_hacker_news(session, context: ReconContext) -> List[Dict[str, Any]]:
     return hits
 
 
-def _search_reddit(session, context: ReconContext) -> List[Dict[str, Any]]:
-    headers = {"User-Agent": "WilliecatRecon/1.0"}
+def _search_reddit(session, context: ReconContext, user_agent: str) -> List[Dict[str, Any]]:
+    headers = {"User-Agent": user_agent}
     try:
         response = session.get(
             REDDIT_SEARCH,

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Dict, List
 
 from ..core import ModuleResult, ReconContext, ReconModule
+from ..user_agents import random_user_agent
 
 DNS_TYPES = {
     "A": 1,
@@ -24,17 +25,19 @@ class DnsEnumModule(ReconModule):
 
     def run(self, context: ReconContext) -> ModuleResult:
         if not context.domain:
-            return ModuleResult(self.name, None, error="Domain is required for DNS enumeration.")
+            return ModuleResult.failure(self.name, "Domain is required for DNS enumeration.")
 
         session = context.session
         records: Dict[str, List[str]] = {}
         warnings: List[str] = []
+        headers = {"User-Agent": random_user_agent()}
 
         for record_type, type_id in DNS_TYPES.items():
             try:
                 response = session.get(
                     DNS_RESOLVER_URL,
                     params={"name": context.domain, "type": type_id},
+                    headers=headers,
                     timeout=context.timeout,
                 )
                 response.raise_for_status()
