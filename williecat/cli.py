@@ -199,8 +199,7 @@ def _print_summary(results: Iterable[ModuleResult]) -> None:
     print("Success:", outcomes["success"])
     print("Blocked:", outcomes["blocked"])
     print("No data:", outcomes["no_data"])
-    if outcomes["timeout"]:
-        print("Timeout:", outcomes["timeout"])
+    print("Timeout:", outcomes["timeout"])
 
 
 def _log_run(
