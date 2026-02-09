@@ -28,6 +28,13 @@ reporting, and extensibility.
 - **Demo Mode:** Run `--demo` to generate canned results for demos and tests
   without touching the network.
 
+## Why Passive?
+
+Williecat stays passive because quiet reconnaissance builds context without
+alerting defenders or polluting logs; it favors open data, metadata, and
+lightweight checks that inform the next move without becoming the loudest
+signal in the room.
+
 ## Installation
 
 Williecat relies only on the Python standard library. Clone the repository and
@@ -153,7 +160,7 @@ python -m williecat --demo --modules whois,headers,dns,certs,ip,social --output 
 **Mode:** Passive reconnaissance with standard library paws.
 
 ## WHOIS
-*Outcome:* :paw_prints: Data retrieved quietly.
+*Outcome:* :paw_prints: success
 ```
 {
   "domain": "demo.williecat.io",
@@ -175,7 +182,7 @@ python -m williecat --demo --modules whois,headers,dns,certs,ip,social --output 
 ```
 
 ## HEADERS
-*Outcome:* :paw_prints: Data retrieved quietly.
+*Outcome:* :paw_prints: success
 *Warnings:*
   - HEAD not supported – performed safe GET fallback.
 ```
@@ -198,7 +205,7 @@ python -m williecat --demo --modules whois,headers,dns,certs,ip,social --output 
 ```
 
 ## DNS
-*Outcome:* :paw_prints: Data retrieved quietly.
+*Outcome:* :paw_prints: success
 ```
 {
   "A": [
@@ -218,7 +225,7 @@ python -m williecat --demo --modules whois,headers,dns,certs,ip,social --output 
 ```
 
 ## CERTS
-*Outcome:* :paw_prints: Data retrieved quietly.
+*Outcome:* :paw_prints: success
 ```
 [
   {
@@ -232,7 +239,7 @@ python -m williecat --demo --modules whois,headers,dns,certs,ip,social --output 
 ```
 
 ## IP
-*Outcome:* :paw_prints: Data retrieved quietly.
+*Outcome:* :paw_prints: success
 ```
 {
   "asn": {
@@ -252,7 +259,7 @@ python -m williecat --demo --modules whois,headers,dns,certs,ip,social --output 
 ```
 
 ## SOCIAL
-*Outcome:* :paw_prints: Data retrieved quietly.
+*Outcome:* :paw_prints: success
 ```
 [
   {

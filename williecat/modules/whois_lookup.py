@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from ..core import ModuleResult, ReconContext, ReconModule
+from ..user_agents import random_user_agent
 
 RDAP_ENDPOINT = "https://rdap.org/domain/{domain}"  # passive RDAP API
 
@@ -16,16 +17,17 @@ class WhoisLookupModule(ReconModule):
 
     def run(self, context: ReconContext) -> ModuleResult:
         if not context.domain:
-            return ModuleResult(self.name, None, error="Domain is required for WHOIS lookups.")
+            return ModuleResult.failure(self.name, "Domain is required for WHOIS lookups.")
 
         session = context.session
         url = RDAP_ENDPOINT.format(domain=context.domain)
+        headers = {"User-Agent": random_user_agent()}
         try:
-            response = session.get(url, timeout=context.timeout)
+            response = session.get(url, headers=headers, timeout=context.timeout)
             response.raise_for_status()
             data = response.json()
         except Exception as exc:  # pragma: no cover - defensive
-            return ModuleResult(self.name, None, error=f"WHOIS lookup failed: {exc}")
+            return ModuleResult.from_exception(self.name, exc)
 
         result = {
             "domain": data.get("ldhName"),

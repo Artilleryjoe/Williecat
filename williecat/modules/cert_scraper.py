@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 from ..core import ModuleResult, ReconContext, ReconModule
+from ..user_agents import random_user_agent
 
 CRT_ENDPOINT = "https://crt.sh/?q={query}&output=json"
 
@@ -16,16 +17,17 @@ class CertificateScraperModule(ReconModule):
 
     def run(self, context: ReconContext) -> ModuleResult:
         if not context.domain:
-            return ModuleResult(self.name, None, error="Domain is required for certificate scraping.")
+            return ModuleResult.failure(self.name, "Domain is required for certificate scraping.")
 
         session = context.session
         url = CRT_ENDPOINT.format(query=context.domain)
+        headers = {"User-Agent": random_user_agent()}
         try:
-            response = session.get(url, timeout=context.timeout)
+            response = session.get(url, headers=headers, timeout=context.timeout)
             response.raise_for_status()
             payload = response.json()
         except Exception as exc:  # pragma: no cover - defensive
-            return ModuleResult(self.name, None, error=f"crt.sh query failed: {exc}")
+            return ModuleResult.from_exception(self.name, exc)
 
         results: List[Dict[str, Any]] = []
         seen: set[str] = set()
