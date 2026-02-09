@@ -5,6 +5,7 @@ import socket
 from typing import Any, Dict, Optional
 
 from ..core import ModuleResult, ReconContext, ReconModule
+from ..user_agents import random_user_agent
 
 IPINFO_ENDPOINT = "https://ipinfo.io/{ip}/json"
 
@@ -20,16 +21,17 @@ class IpIntelModule(ReconModule):
         if not ip_address and context.domain:
             ip_address = _resolve_domain(context.domain)
         if not ip_address:
-            return ModuleResult(self.name, None, error="An IP address or resolvable domain is required.")
+            return ModuleResult.failure(self.name, "An IP address or resolvable domain is required.")
 
         session = context.session
         url = IPINFO_ENDPOINT.format(ip=ip_address)
+        headers = {"User-Agent": random_user_agent()}
         try:
-            response = session.get(url, timeout=context.timeout)
+            response = session.get(url, headers=headers, timeout=context.timeout)
             response.raise_for_status()
             payload: Dict[str, Any] = response.json()
         except Exception as exc:  # pragma: no cover - defensive
-            return ModuleResult(self.name, None, error=f"ipinfo lookup failed: {exc}")
+            return ModuleResult.from_exception(self.name, exc)
 
         data = {
             "ip": payload.get("ip", ip_address),
