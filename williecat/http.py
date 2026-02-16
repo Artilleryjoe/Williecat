@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
@@ -111,10 +112,20 @@ class HttpSession:
                 request.add_header(key, value)
         if not allow_redirects:
             request.redirect = lambda self, req, fp, code, msg, headers: None  # pragma: no cover - rarely used
-        with self._opener.open(request, timeout=timeout) as response:
-            data = response.read()
-            cookies = [Cookie(cookie.name, cookie.value) for cookie in self.cookie_jar]
-            return HttpResponse(data, response.geturl(), response.getcode(), response.headers.items(), cookies)
+        try:
+            with self._opener.open(request, timeout=timeout) as response:
+                data = response.read()
+                status = response.getcode()
+                response_url = response.geturl()
+                response_headers = response.headers.items()
+        except urllib.error.HTTPError as exc:
+            data = exc.read()
+            status = exc.code
+            response_url = exc.geturl()
+            response_headers = exc.headers.items() if exc.headers is not None else ()
+
+        cookies = [Cookie(cookie.name, cookie.value) for cookie in self.cookie_jar]
+        return HttpResponse(data, response_url, status, response_headers, cookies)
 
     def get(
         self,

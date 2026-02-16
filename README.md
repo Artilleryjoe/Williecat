@@ -190,7 +190,7 @@ python -m williecat --demo --modules whois,headers,dns,certs,ip,social --output 
   "cookies": {
     "session": "demo"
   },
-  "method": "HEAD",
+  "method": "GET (fallback)",
   "powered_by": "Williecat Showcase",
   "security_headers": {
     "content-security-policy": "default-src 'self'",
