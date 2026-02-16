@@ -33,7 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--url", help="Full URL for HTTP header collection.")
     parser.add_argument(
         "--modules",
-        help="Comma separated list of modules to run (default: all).",
+        help="Comma-separated list of modules to run (default: all).",
     )
     parser.add_argument(
         "--output",

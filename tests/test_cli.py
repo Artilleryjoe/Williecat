@@ -56,3 +56,11 @@ def test_resolve_pawprints_env_override(monkeypatch, tmp_path):
     resolved = cli._resolve_pawprints_path()
 
     assert resolved == override_path
+
+
+def test_modules_help_uses_hyphenated_comma_separated():
+    parser = cli.build_parser()
+
+    modules_action = next(action for action in parser._actions if action.dest == "modules")
+
+    assert "Comma-separated" in modules_action.help

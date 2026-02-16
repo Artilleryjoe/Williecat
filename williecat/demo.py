@@ -43,7 +43,7 @@ def load_demo_run() -> Tuple[ReconContext, List[ModuleResult]]:
             "headers",
             {
                 "url": DEMO_URL,
-                "method": "HEAD",
+                "method": "GET (fallback)",
                 "status_code": 200,
                 "server": "nginx/1.25.2",
                 "powered_by": "Williecat Showcase",
