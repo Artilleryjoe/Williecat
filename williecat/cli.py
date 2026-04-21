@@ -2,25 +2,16 @@
 from __future__ import annotations
 
 import argparse
-import json
-import os
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable
 
-from .core import ModuleResult, ReconContext, ReconModule
-from .demo import load_demo_run
-from .http import HttpSession
-from .modules import get_module_registry, iter_modules
-from .modules import reporter as reporter_utils
+from .modules import get_module_registry
+from .product.workflow import PAWPRINTS_ENV_VAR, RunRequest, _resolve_pawprints_path, run_recon
 
 BANNER = r"""/\_/\  Williecat v0.1
 ( o.o ) Reconnaissance with Instinct
 ^ <"""
-
-DEFAULT_MODULES = ["whois", "headers", "dns", "certs", "ip", "social"]
-PAWPRINTS_ENV_VAR = "WILLIECAT_PAWPRINTS"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -78,121 +69,43 @@ def main(argv: Iterable[str] | None = None) -> int:
             print(f"{name}: {module.description}")
         return 0
 
-    if args.demo:
-        context, results = load_demo_run()
-        modules = [result.module for result in results]
-        if not args.quiet:
-            print(BANNER)
-            print("[demo] Using built-in sample data – no network requests performed.")
-            for result in results:
-                _display_result(result)
-    else:
-        modules: List[str]
-        if args.modules:
-            try:
-                modules = iter_modules(args.modules.split(","))
-            except KeyError as exc:
-                parser.error(str(exc))
-        else:
-            modules = list(DEFAULT_MODULES)
+    if not args.demo and not args.domain and not args.ip and not args.url:
+        parser.error("At least one of --domain, --ip, or --url must be provided.")
 
-        if not args.domain and not args.ip and not args.url:
-            parser.error("At least one of --domain, --ip, or --url must be provided.")
-
-        session = HttpSession()
-
-        context = ReconContext(
-            domain=args.domain,
-            ip_address=args.ip,
-            base_url=args.url,
-            timeout=args.timeout,
-            session=session,
-        )
-
-        if not args.quiet:
-            print(BANNER)
-        results = _execute_modules(context, modules, quiet=args.quiet)
-
-    _emit_reports(
-        context,
-        modules,
-        results,
+    request = RunRequest(
+        domain=args.domain,
+        ip=args.ip,
+        url=args.url,
+        modules=args.modules,
         output_path=args.output,
         json_path=args.json_output,
+        timeout=args.timeout,
         quiet=args.quiet,
+        demo=args.demo,
     )
+
     if not args.quiet:
-        _print_summary(results)
+        print(BANNER)
+        if args.demo:
+            print("[demo] Using built-in sample data – no network requests performed.")
+
+    try:
+        response = run_recon(request)
+    except KeyError as exc:
+        parser.error(str(exc))
+
+    if not args.quiet:
+        _print_summary(response.results)
 
     return 0
 
 
-def _execute_modules(context: ReconContext, modules: Iterable[str], *, quiet: bool) -> List[ModuleResult]:
-    registry = get_module_registry()
-    results: List[ModuleResult] = []
-    for name in modules:
-        module_cls = registry[name]
-        module: ReconModule = module_cls()
-        result = module.run(context)
-        results.append(result)
-        _display_result(result, quiet=quiet)
-    return results
-
-
-def _print_inline(result: ModuleResult) -> None:
-    header = f"[{result.module.upper()}]"
-    print(header)
-    print(f"  Outcome: {result.outcome}")
-    if result.outcome == "success":
-        if isinstance(result.data, dict):
-            for key, value in result.data.items():
-                print(f"  {key}: {value}")
-        elif isinstance(result.data, list):
-            for item in result.data:
-                print(f"  - {item}")
-    elif result.outcome == "no_data":
-        print("  No data collected.")
-    if result.warnings:
-        for warning in result.warnings:
-            print(f"  ! {warning}")
-
-
-def _display_result(result: ModuleResult, *, quiet: bool = False) -> None:
-    if quiet:
-        return
-    _print_inline(result)
-    print("soft paws only.")
-
-
-def _emit_reports(
-    context: ReconContext,
-    modules: Iterable[str],
-    results: List[ModuleResult],
-    *,
-    output_path: Path | None,
-    json_path: Path | None,
-    quiet: bool,
-) -> None:
-    if output_path:
-        markdown = reporter_utils.render_markdown(context, results)
-        reporter_utils.write_markdown(output_path, markdown)
-        if not quiet:
-            print(f"[+] Markdown report written to {output_path}")
-
-    if json_path:
-        reporter_utils.write_json(json_path, results)
-        if not quiet:
-            print(f"[+] JSON report written to {json_path}")
-
-    _log_run(context, modules, results, output_path, json_path, quiet=quiet)
-
-
-def _print_summary(results: Iterable[ModuleResult]) -> None:
+def _print_summary(results: Iterable[object]) -> None:
     outcomes = {"success": 0, "blocked": 0, "no_data": 0, "timeout": 0}
     total = 0
     for result in results:
         total += 1
-        if result.outcome in outcomes:
+        if getattr(result, "outcome", None) in outcomes:
             outcomes[result.outcome] += 1
 
     print("Modules run:", total)
@@ -200,42 +113,6 @@ def _print_summary(results: Iterable[ModuleResult]) -> None:
     print("Blocked:", outcomes["blocked"])
     print("No data:", outcomes["no_data"])
     print("Timeout:", outcomes["timeout"])
-
-
-def _log_run(
-    context: ReconContext,
-    modules: Iterable[str],
-    results: Iterable[ModuleResult],
-    output_path: Path | None,
-    json_path: Path | None,
-    *,
-    quiet: bool,
-) -> None:
-    pawprints_path = _resolve_pawprints_path()
-    record = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "domain": context.domain,
-        "ip_address": context.ip_address,
-        "base_url": context.base_url,
-        "modules": list(modules),
-        "output": str(output_path) if output_path else None,
-        "json_output": str(json_path) if json_path else None,
-        "results": [result.as_dict() for result in results],
-    }
-
-    try:
-        with pawprints_path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record, sort_keys=True) + "\n")
-    except OSError as exc:  # pragma: no cover - best effort logging
-        if not quiet:
-            print(f"[!] Failed to write pawprints log: {exc}", file=sys.stderr)
-
-
-def _resolve_pawprints_path() -> Path:
-    """Return the path where pawprints logs should be written."""
-
-    override = os.environ.get(PAWPRINTS_ENV_VAR)
-    return Path(override) if override else Path("pawprints.log")
 
 
 if __name__ == "__main__":  # pragma: no cover
