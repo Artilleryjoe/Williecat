@@ -31,6 +31,7 @@ def test_demo_mode_writes_outputs_and_log(tmp_path, monkeypatch):
 
     payload = json.loads(json_path.read_text())
     assert any(entry["module"] == "whois" for entry in payload)
+    assert any(entry["module"] == "robots" for entry in payload)
 
     log_record = json.loads(pawprints.read_text().splitlines()[-1])
     assert log_record["domain"] == demo.DEMO_DOMAIN
@@ -45,6 +46,7 @@ def test_render_markdown_contains_demo_data():
 
     assert f"# Williecat Recon Report – {demo.DEMO_DOMAIN}" in markdown
     assert "WHOIS" in markdown
+    assert "ROBOTS" in markdown
     assert "Example Registrar LLC" in markdown
     assert "*Warnings:*" in markdown
 

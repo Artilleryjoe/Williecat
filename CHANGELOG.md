@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.0 – Robots-aware passive discovery
+
+- Add a robots module that collects `robots.txt` directives, crawl delays, and sitemap URLs.
+- Include robots output in demo mode, default recon runs, docs, and test coverage.
+
 ## v0.1.1 – Stability, clarity, and quieter paws
 
 - Normalize module outcomes into success/blocked/timeout/no_data for cleaner reporting.

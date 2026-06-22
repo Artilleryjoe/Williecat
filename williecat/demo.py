@@ -79,6 +79,18 @@ def load_demo_run() -> Tuple[ReconContext, List[ModuleResult]]:
             ],
         ),
         ModuleResult(
+            "robots",
+            {
+                "robots_url": f"{DEMO_URL}/robots.txt",
+                "sitemaps": [f"{DEMO_URL}/sitemap.xml"],
+                "crawl_delay": "5",
+                "rules": [
+                    {"agent": "*", "directive": "allow", "path": "/"},
+                    {"agent": "*", "directive": "disallow", "path": "/admin"},
+                ],
+            },
+        ),
+        ModuleResult(
             "ip",
             {
                 "ip": DEMO_IP,

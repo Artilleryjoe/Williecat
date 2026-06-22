@@ -15,6 +15,8 @@ reporting, and extensibility.
   HTTPS resolver.
 - **Certificate Transparency:** Scrape recent certificates from `crt.sh` for
   additional domains and hostnames that may reference the target.
+- **Robots + Sitemap Discovery:** Fetch `robots.txt` to surface crawl directives,
+  crawl delays, and declared sitemap URLs without crawling the site.
 - **IP Intelligence:** Pull ASN and geolocation data from ipinfo.io, optionally
   resolving hostnames to addresses first.
 - **Social Trace:** Sweep Hacker News and Reddit mentions to capture emerging
@@ -53,7 +55,7 @@ The banner appears on launch unless `--quiet` is supplied:
 Run a focused recon sweep:
 
 ```bash
-python -m williecat --domain example.com --modules whois,headers,dns,certs,ip,social --output recon_report.md
+python -m williecat --domain example.com --modules whois,headers,dns,certs,robots,ip,social --output recon_report.md
 ```
 
 ### Command-line options
@@ -91,7 +93,7 @@ IP, or URL as needed.
   ```bash
   python -m williecat \
     --domain example.com \
-    --modules whois,headers,dns,certs,ip,social \
+    --modules whois,headers,dns,certs,robots,ip,social \
     --output recon_report.md \
     --json-output recon_report.json
   ```
@@ -151,7 +153,7 @@ demo mode. This keeps the example fully reproducible even without network
 access:
 
 ```bash
-python -m williecat --demo --modules whois,headers,dns,certs,ip,social --output recon_report.md --quiet
+python -m williecat --demo --modules whois,headers,dns,certs,robots,ip,social --output recon_report.md --quiet
 ```
 
 ````
