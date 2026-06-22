@@ -10,6 +10,7 @@ from williecat.core import ReconContext
 from williecat.demo import load_demo_run
 from williecat.http import HttpSession
 from williecat.modules.header_sniffer import HeaderSnifferModule
+from williecat.modules.robots_probe import RobotsProbeModule
 
 
 class _FakeHeaders:
@@ -90,3 +91,34 @@ def test_demo_headers_warning_matches_fallback_method():
 
     assert headers_result.data["method"] == "GET (fallback)"
     assert any("HEAD not supported" in warning for warning in headers_result.warnings)
+
+
+class _RobotsOpener:
+    def open(self, request: Request, timeout=None):
+        assert request.full_url == "https://example.test/robots.txt"
+        return _FakeResponse(
+            request.full_url,
+            200,
+            [("Content-Type", "text/plain")],
+            b"User-agent: *\nAllow: /\nDisallow: /admin\nCrawl-delay: 10\nSitemap: /sitemap.xml\n",
+        )
+
+
+def test_robots_probe_parses_directives_and_sitemaps():
+    session = HttpSession()
+    session._opener = _RobotsOpener()
+    context = ReconContext(domain="example.test", timeout=2.0, session=session)
+
+    result = RobotsProbeModule().run(context)
+
+    assert result.outcome == "success"
+    assert result.data["robots_url"] == "https://example.test/robots.txt"
+    assert result.data["sitemaps"] == ["https://example.test/sitemap.xml"]
+    assert result.data["crawl_delay"] == "10"
+    assert {"agent": "*", "directive": "disallow", "path": "/admin"} in result.data["rules"]
+
+
+def test_demo_run_includes_robots_module():
+    _, results = load_demo_run()
+
+    assert any(result.module == "robots" for result in results)

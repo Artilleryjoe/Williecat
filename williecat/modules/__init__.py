@@ -13,6 +13,7 @@ def get_module_registry() -> Dict[str, type[ReconModule]]:
     from .dns_enum import DnsEnumModule
     from .cert_scraper import CertificateScraperModule
     from .header_sniffer import HeaderSnifferModule
+    from .robots_probe import RobotsProbeModule
     from .ip_intel import IpIntelModule
     from .social_trace import SocialTraceModule
     return {
@@ -20,6 +21,7 @@ def get_module_registry() -> Dict[str, type[ReconModule]]:
         DnsEnumModule.name: DnsEnumModule,
         CertificateScraperModule.name: CertificateScraperModule,
         HeaderSnifferModule.name: HeaderSnifferModule,
+        RobotsProbeModule.name: RobotsProbeModule,
         IpIntelModule.name: IpIntelModule,
         SocialTraceModule.name: SocialTraceModule,
     }

@@ -15,7 +15,7 @@ from ..http import HttpSession
 from ..modules import get_module_registry, iter_modules
 from ..modules import reporter as reporter_utils
 
-DEFAULT_MODULES = ["whois", "headers", "dns", "certs", "ip", "social"]
+DEFAULT_MODULES = ["whois", "headers", "dns", "certs", "robots", "ip", "social"]
 PAWPRINTS_ENV_VAR = "WILLIECAT_PAWPRINTS"
 
 
