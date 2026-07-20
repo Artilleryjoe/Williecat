@@ -70,6 +70,16 @@ class _FakeOpener:
         raise AssertionError(f"Unexpected method: {method}")
 
 
+class _TrackingOpener:
+    def __init__(self, response: _FakeResponse):
+        self.response = response
+        self.calls = 0
+
+    def open(self, request: Request, timeout=None):
+        self.calls += 1
+        return self.response
+
+
 def test_header_sniffer_falls_back_to_get_after_head_405():
     url = "https://example.test"
     session = HttpSession()
@@ -83,6 +93,24 @@ def test_header_sniffer_falls_back_to_get_after_head_405():
     assert result.data["status_code"] == 200
     assert result.data["server"] == "test-nginx"
     assert "HEAD not supported" in result.warnings[0]
+
+
+def test_http_session_uses_non_redirecting_opener_when_redirects_disabled():
+    session = HttpSession()
+    redirecting = _TrackingOpener(_FakeResponse("https://example.test/final", 200, []))
+    non_redirecting = _TrackingOpener(
+        _FakeResponse("https://example.test/start", 302, [("Location", "/final")])
+    )
+    session._opener = redirecting
+    session._no_redirect_opener = non_redirecting
+
+    response = session.get("https://example.test/start", allow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.url == "https://example.test/start"
+    assert response.headers["location"] == "/final"
+    assert non_redirecting.calls == 1
+    assert redirecting.calls == 0
 
 
 def test_demo_headers_warning_matches_fallback_method():

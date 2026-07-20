@@ -19,6 +19,13 @@ class HttpError(RuntimeError):
         self.url = url
 
 
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Prevent urllib from automatically following redirect responses."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 class CaseInsensitiveHeaders(MutableMapping[str, str]):
     """Case-insensitive mapping of HTTP headers."""
 
@@ -83,6 +90,10 @@ class HttpSession:
     def __init__(self):
         self.cookie_jar = CookieJar()
         self._opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookie_jar))
+        self._no_redirect_opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(self.cookie_jar),
+            _NoRedirectHandler(),
+        )
         self._headers: Dict[str, str] = {}
 
     def headers(self) -> Mapping[str, str]:  # pragma: no cover - access helper
@@ -110,10 +121,9 @@ class HttpSession:
         if headers:
             for key, value in headers.items():
                 request.add_header(key, value)
-        if not allow_redirects:
-            request.redirect = lambda self, req, fp, code, msg, headers: None  # pragma: no cover - rarely used
+        opener = self._opener if allow_redirects else self._no_redirect_opener
         try:
-            with self._opener.open(request, timeout=timeout) as response:
+            with opener.open(request, timeout=timeout) as response:
                 data = response.read()
                 status = response.getcode()
                 response_url = response.geturl()
